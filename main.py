@@ -319,7 +319,7 @@ playeranim=SpriteSheetAnimation('assets/player/frisk_left',rotation_y=-90,origin
     }
     )
 
-#what I believe get called every frame like update does
+#what I believe gets called every frame like update does
 def input(key):
     global PressedDorDpadRight,Move
     if key=='d' and not PressedDorDpadRight:
@@ -327,20 +327,33 @@ def input(key):
         introfunc3()
         destroy(intro3)
     if key == 'a' and Move:
-        if not playeranim.play_animation('walk_left'):
             playeranim.play_animation('walk_left')
+            if player.walk_speed==0:
+                player.walk_speed=8
     elif key=='a up' and Move:
         playeranim.play_animation('idle_left')
     elif key == 'd' and Move:
-                playeranim.play_animation('walk_right')
+            playeranim.play_animation('walk_right')
+            if player.walk_speed==0:
+                player.walk_speed=8
     elif key=='d up' and Move:
         playeranim.play_animation('idle_right')
     if held_keys['d']:
         if not playeranim.play_animation('walk_right'):
             playeranim.play_animation('walk_right')
+            if player.walk_speed==0:
+                player.walk_speed=8
     if held_keys['a']:
         if not playeranim.play_animation('walk_left'):
             playeranim.play_animation('walk_left')
+        if player.walk_speed==0:
+            player.walk_speed=8
+    if key=='d' and key=='a':
+        playeranim.play_animation('idle_right')
+        player.walk_speed=0
+    if held_keys['a'] and held_keys['d']:
+        playeranim.play_animation('idle_right')
+        player.walk_speed=0
 
 #debug makes it so i know where to place objects when testing
 pos=Text(text=False,y=.5,x=-.3)
