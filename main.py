@@ -327,13 +327,20 @@ def input(key):
         introfunc3()
         destroy(intro3)
     if key == 'a' and Move:
-        playeranim.play_animation('walk_left')
+        if not playeranim.play_animation('walk_left'):
+            playeranim.play_animation('walk_left')
     elif key=='a up' and Move:
         playeranim.play_animation('idle_left')
     elif key == 'd' and Move:
-        playeranim.play_animation('walk_right')
+                playeranim.play_animation('walk_right')
     elif key=='d up' and Move:
         playeranim.play_animation('idle_right')
+    if held_keys['d']:
+        if not playeranim.play_animation('walk_right'):
+            playeranim.play_animation('walk_right')
+    if held_keys['a']:
+        if not playeranim.play_animation('walk_left'):
+            playeranim.play_animation('walk_left')
 
 #debug makes it so i know where to place objects when testing
 pos=Text(text=False,y=.5,x=-.3)
@@ -353,5 +360,20 @@ def update():
 def endload():
     apps.ends()
 invoke(endload)
- 
+
+pausetest=Text(text="Pause menu under-construction.",enabled=False,x=-.2,y=.1)
+pause=Entity(enabled=False, ignore_paused=True)
+
+def pause_input(key):
+    if key == 'tab':
+        pause.enabled = not pause.enabled
+
+        player.visible_self = pause.enabled
+        mouse.locked = not pause.enabled
+        pausetest.enabled = pause.enabled
+
+        application.paused = pause.enabled
+
+pause_handler = Entity(ignore_paused=True, input=pause_input)
+
 app.run()
