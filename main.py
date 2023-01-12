@@ -128,6 +128,15 @@ class interacttest(Entity):
             destroy(intro6)
             introendfunc()
 
+class Door(Entity):
+    def __init__(self, trigger_distance, on_trigger, **kwargs):
+        super().__init__(parent=scene,collider='box',model='cube',scale=(1,3), **kwargs)
+        self.trigger_distance=trigger_distance
+        self.on_trigger=on_trigger
+
+def door():
+    return
+
 class Trigger(Entity):  #Thank you Squiggle for helping me with the trigger
     def __init__(self, trigger_distance, on_trigger, **kwargs):
         super().__init__(parent=scene, model='cube', alpha=0, **kwargs)
@@ -155,7 +164,7 @@ def TriggerActivated():
 
 #Second trigger argument
 def TriggerActivated1():
-    thoughts5=Text(text="Thats strange they weren't here before",y=.4,x=-.3)
+    thoughts5=Text(text="Thats strange they weren't here before")
     def DestroyThoughts5():
         destroy(thoughts5)
     trigger3=Trigger(1,TriggerActivated3,x=26,y=7,scale_x=2,scale_y=1)
@@ -171,13 +180,15 @@ def TriggerActivated3():
 
 #Fourth trigger argument!!!
 def TriggerActivated4():
-    global Move,camerafollow,cameramove,DoneParkour,FloorParkour,FloorParkour1
+    global Move,camerafollow,cameramove,DoneParkour,FloorParkour,FloorParkour1,triggeractivated
     mouse.enabled=False
     Move=False
+    destroy(triggeractivated)
     destroy(DoneParkour)
     destroy(FloorParkour)
     destroy(FloorParkour1)
     ParkourCollapse.play()
+    triggeractivated1=TriggerInteractable(2,door,x=-13)
     playeranim.play_animation('idle_right')
     camera.scripts.remove(camerafollow)
     cameramove=Entity(model='cube',alpha=0,x=22)
@@ -224,6 +235,8 @@ class TriggerInteractable(Entity):
 def TriggerInteractableActivated():
     print("Interacted")
 
+def TriggerInteractableActivated1():
+    print("Door interacted")
 #KILL THOUGHTS3 AND 4!
 def DestroyThoughts3():
     global thoughts3
@@ -317,6 +330,7 @@ def introendfunc():
         introend1=Text(text='No, no, no',x=-.5,y=.1,scale=2)
         player.x=-8
         def introendfunc2():
+            global triggeractivated
             destroy(introend1)
             introend2=Text(text='WAKE UP!',x=-.5,y=.1,scale=3)
             triggeractivated=TriggerInteractable(2,TriggerInteractableActivated,x=-13)
