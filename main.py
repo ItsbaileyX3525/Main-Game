@@ -62,7 +62,7 @@ class AppyPappy(threading.Thread): #
 
         lbl = ImageLabel(self.root)
         lbl.pack()
-        lbl.load('load.gif')
+        lbl.load('assets/load.gif')
         self.root.attributes('-fullscreen', True)
         self.root.attributes('-topmost', True)
         self.root.mainloop()
@@ -130,7 +130,7 @@ class interacttest(Entity):
 
 class Trigger(Entity):  #Thank you Squiggle for helping me with the trigger
     def __init__(self, trigger_distance, on_trigger, **kwargs):
-        super().__init__(parent=scene, model='cube', alpha=0.5, **kwargs)
+        super().__init__(parent=scene, model='cube', alpha=0, **kwargs)
         #Little bit of
         self.trigger_distance = trigger_distance 
         self.on_trigger = on_trigger
@@ -155,7 +155,7 @@ def TriggerActivated():
 
 #Second trigger argument
 def TriggerActivated1():
-    thoughts5=Text(text="Thats strange they weren't here before")
+    thoughts5=Text(text="Thats strange they weren't here before",y=.4,x=-.3)
     def DestroyThoughts5():
         destroy(thoughts5)
     trigger3=Trigger(1,TriggerActivated3,x=26,y=7,scale_x=2,scale_y=1)
@@ -164,7 +164,7 @@ def TriggerActivated1():
 #Third trigger argument
 def TriggerActivated3():
     global DoneParkour
-    thoughts6=Text(text="What's even going on why am I up here?")
+    thoughts6=Text(text="What's even going on why am I up here?",y=.4,x=-.3)
     destroy(thoughts6,delay=1.5)
     DoneParkour.color=color.green
     trigger4=Trigger(2,TriggerActivated4,x=-4,scale_y=20)
@@ -189,8 +189,40 @@ def StopCameraMove():
     camera.scripts.remove(camerafollow)
     destroy(cameramove)
     camerafollow2=camera.add_script(SmoothFollow(target=player, offset=[0,5,-30], speed=4))
-    thoughts7=Text(text="")
+    thoughts7=Text(text="I could've died...",y=.4,x=-.3)
+    destroy(thoughts7,delay=1)
     Move=True
+
+class Trigger(Entity):  #Thank you Squiggle for helping me with the trigger
+    def __init__(self, trigger_distance, on_trigger, **kwargs):
+        super().__init__(parent=scene, model='cube', alpha=0, **kwargs)
+        #Little bit of
+        self.trigger_distance = trigger_distance 
+        self.on_trigger = on_trigger
+
+    def update(self):
+        dist = distance_2d(self.position, player.position) #Figure out how to make it xyz and not just xz
+        if dist < self.trigger_distance: #Distguishes the distance the player is from the Trigger
+            self.on_trigger()
+            destroy(self)
+
+
+class TriggerInteractable(Entity):
+    def __init__(self, trigger_distance, on_trigger, **kwargs):
+        super().__init__(parent=scene, model='cube', alpha=0, **kwargs)
+        self.trigger_distance=trigger_distance
+        self.on_trigger = on_trigger
+    def update(self):
+        global dist
+        dist=distance_2d(self.position,player.position)
+    def input(self,key):
+        global dist
+        if dist < self.trigger_distance and key=='e':
+            self.on_trigger()
+            destroy(self)
+
+def TriggerInteractableActivated():
+    print("Interacted")
 
 #KILL THOUGHTS3 AND 4!
 def DestroyThoughts3():
@@ -213,6 +245,7 @@ time.sleep(2)
 app = Ursina()
 
 
+camera.y=-1
 player=PlatformerController2d(model='cube',alpha=0,rotation_y=90,origin_y=-.5)
 camerafollow=camera.add_script(SmoothFollow(target=player, offset=[0,5,-30], speed=4))
 #Entity(model='cube',texture='assets/player/WHO_ARE_YOU',scale_y=1.5,scale_x=.75,y=-.3)
@@ -286,6 +319,7 @@ def introendfunc():
         def introendfunc2():
             destroy(introend1)
             introend2=Text(text='WAKE UP!',x=-.5,y=.1,scale=3)
+            triggeractivated=TriggerInteractable(2,TriggerInteractableActivated,x=-13)
             def introendfunc3():
                 global intermissionscreen
                 intermissionscreen.enabled=False
@@ -318,34 +352,42 @@ playeranim=SpriteSheetAnimation('assets/player/frisk_left',rotation_y=-90,origin
     'idle_right' : ((3,3), (3,3)),
     }
     )
+def walkheldisabledfunc(): 
+    global walkhelddisabled
+    walkhelddisabled=True
 
+walkhelddisabled=False
 #what I believe gets called every frame like update does
 def input(key):
-    global PressedDorDpadRight,Move
+    global PressedDorDpadRight,Move,walkhelddisabled
     if key=='d' and not PressedDorDpadRight:
         PressedDorDpadRight=True
         introfunc3()
         destroy(intro3)
     if key == 'a' and Move:
-            playeranim.play_animation('walk_left')
-            if player.walk_speed==0:
-                player.walk_speed=8
+        playeranim.play_animation('walk_left')
+        if player.walk_speed==0:
+            player.walk_speed=8
     elif key=='a up' and Move:
         playeranim.play_animation('idle_left')
+        walkhelddisabled=False
     elif key == 'd' and Move:
             playeranim.play_animation('walk_right')
             if player.walk_speed==0:
                 player.walk_speed=8
     elif key=='d up' and Move:
         playeranim.play_animation('idle_right')
+        walkhelddisabled=False
     if held_keys['d']:
-        if not playeranim.play_animation('walk_right'):
+        if not walkhelddisabled:
             playeranim.play_animation('walk_right')
+            invoke(walkheldisabledfunc,delay=.6)
             if player.walk_speed==0:
                 player.walk_speed=8
     if held_keys['a']:
-        if not playeranim.play_animation('walk_left'):
+        if not walkhelddisabled:
             playeranim.play_animation('walk_left')
+            invoke(walkheldisabledfunc,delay=.6)
         if player.walk_speed==0:
             player.walk_speed=8
     if key=='d' and key=='a':
