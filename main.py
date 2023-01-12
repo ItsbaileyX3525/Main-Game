@@ -104,6 +104,7 @@ class Key2(Entity):
             self.Key2Moved+=1
         if dist<1.3 and self.Key2Moved==4:
             global DoneParkour,FloorParkour,FloorParkour1
+            haskey12=True
             levelinfo=Text(text='Collected key!',y=.25,x=-.65)
             FloorParkour=Entity(model='cube',color=color.black,collider='box',scale_x=2,x=20,y=1)
             FloorParkour1=Entity(model='cube',color=color.black,collider='box',scale_x=2,x=24,y=4)
@@ -129,13 +130,21 @@ class interacttest(Entity):
             introendfunc()
 
 class Door(Entity):
-    def __init__(self, trigger_distance, on_trigger, **kwargs):
+    def __init__(self, trigger_distance, has_key, on_trigger, **kwargs):
         super().__init__(parent=scene,collider='box',model='cube',scale=(1,3), **kwargs)
         self.trigger_distance=trigger_distance
         self.on_trigger=on_trigger
+        self.has_key=has_key
+    def input(self, key):
+        dist=distance_2d(self.position, player.position)
+        if dist<=self.trigger_distance and key=='e' and self.has_key:
+            self.on_trigger()
+            destroy(self)
 
-def door():
-    return
+def DoorActivated():
+    doorcreated=False
+
+
 
 class Trigger(Entity):  #Thank you Squiggle for helping me with the trigger
     def __init__(self, trigger_distance, on_trigger, **kwargs):
@@ -153,7 +162,7 @@ class Trigger(Entity):  #Thank you Squiggle for helping me with the trigger
 #First trigger argument
 def TriggerActivated():
     Thoughts=Text(text="Looks like I'm trapped in here.",y=.4,x=-.3)
-    def DestroyThoughts(): #OMG OMG FUNCTION NESTING, shut
+    def DestroyThoughts(): 
         destroy(Thoughts)
         Thoughts1=Text(text='Theres gotta be something nearby',y=.4,x=-.3)
         RealKey=[Key2(x=0) in range(1)] #Spawns the "RealKey" as Key2, Key2 is a class
@@ -176,6 +185,7 @@ def TriggerActivated3():
     thoughts6=Text(text="What's even going on why am I up here?",y=.4,x=-.3)
     destroy(thoughts6,delay=1.5)
     DoneParkour.color=color.green
+    door.color=color.green
     trigger4=Trigger(2,TriggerActivated4,x=-4,scale_y=20)
 
 #Fourth trigger argument!!!
@@ -188,7 +198,6 @@ def TriggerActivated4():
     destroy(FloorParkour)
     destroy(FloorParkour1)
     ParkourCollapse.play()
-    triggeractivated1=TriggerInteractable(2,door,x=-13)
     playeranim.play_animation('idle_right')
     camera.scripts.remove(camerafollow)
     cameramove=Entity(model='cube',alpha=0,x=22)
@@ -204,30 +213,14 @@ def StopCameraMove():
     destroy(thoughts7,delay=1)
     Move=True
 
-class Trigger(Entity):  #Thank you Squiggle for helping me with the trigger
-    def __init__(self, trigger_distance, on_trigger, **kwargs):
-        super().__init__(parent=scene, model='cube', alpha=0, **kwargs)
-        #Little bit of
-        self.trigger_distance = trigger_distance 
-        self.on_trigger = on_trigger
-
-    def update(self):
-        dist = distance_2d(self.position, player.position) #Figure out how to make it xyz and not just xz
-        if dist < self.trigger_distance: #Distguishes the distance the player is from the Trigger
-            self.on_trigger()
-            destroy(self)
-
 
 class TriggerInteractable(Entity):
     def __init__(self, trigger_distance, on_trigger, **kwargs):
         super().__init__(parent=scene, model='cube', alpha=0, **kwargs)
         self.trigger_distance=trigger_distance
         self.on_trigger = on_trigger
-    def update(self):
-        global dist
-        dist=distance_2d(self.position,player.position)
     def input(self,key):
-        global dist
+        dist=distance_2d(self.position,player.position)
         if dist < self.trigger_distance and key=='e':
             self.on_trigger()
             destroy(self)
@@ -235,8 +228,7 @@ class TriggerInteractable(Entity):
 def TriggerInteractableActivated():
     print("Interacted")
 
-def TriggerInteractableActivated1():
-    print("Door interacted")
+
 #KILL THOUGHTS3 AND 4!
 def DestroyThoughts3():
     global thoughts3
@@ -258,10 +250,13 @@ time.sleep(2)
 app = Ursina()
 
 
+haskey12=False
 camera.y=-1
 player=PlatformerController2d(model='cube',alpha=0,rotation_y=90,origin_y=-.5)
 camerafollow=camera.add_script(SmoothFollow(target=player, offset=[0,5,-30], speed=4))
 #Entity(model='cube',texture='assets/player/WHO_ARE_YOU',scale_y=1.5,scale_x=.75,y=-.3)
+
+"""MAINMANHIMSELF=Entity(model='quad',texture='assets/The_big_man_himself',z=100,scale=20,y=8)"""
 
 #loads objects now and destroys them as to not cause a fps drop when loading them in later
 Skelekeyload=Entity(model='skelekey')
@@ -274,6 +269,7 @@ camera.orthographic = True
 camera.fov = 20
 
 #Level platforms and walls etc.
+door=Door(2,False,DoorActivated,x=-14,z=-20,color=color.red,enabled=False)
 ground = Entity(model='cube', color=color.gray.tint(-.4), z=-.1, y=-1, origin_y=.5, scale=(1000,100), collider='box', ignore=True)
 wall=Entity(model='cube',color=color.gray,scale=(2,100),x=-10,collider='box')
 wall1=Entity(model='cube',color=color.gray,x=9,y=2,collider='box',scale=(2,50,-10))
@@ -285,6 +281,7 @@ haskey1=False
 getrektnoob=False
 Move=True
 intermission=False
+haskey12=False
 PressedDorDpadRight=True
 
 #idc about function nesting deal with it
@@ -335,8 +332,10 @@ def introendfunc():
             introend2=Text(text='WAKE UP!',x=-.5,y=.1,scale=3)
             triggeractivated=TriggerInteractable(2,TriggerInteractableActivated,x=-13)
             def introendfunc3():
-                global intermissionscreen
+                global intermissionscreen,door,doorcreated
                 intermissionscreen.enabled=False
+                doorcreated=True
+                door.enabled=True
                 player.x=-8
                 trigger=Trigger(5,TriggerActivated,scale=(1,20),x=25)
                 destroy(introend2)
@@ -416,7 +415,11 @@ pos=Text(text=False,y=.5,x=-.3)
 
 #gets called everyframe 
 def update():
-    global getrektnoob,intermission,intermissionscreen
+    global getrektnoob,intermission,intermissionscreen,door
+    if haskey12:
+        door.has_key=True
+    else:
+        door.has_key=False
     if getrektnoob:
         introfunc6()
         getrektnoob=False
@@ -424,6 +427,7 @@ def update():
         intermissionscreen.enabled=True
         intermission=False
     pos.text=f'X: {player.x},Y: {player.y}' #updates the co-ords text
+    """MAINMANHIMSELF.x=player.x"""
 
 #Kills the loading screen
 def endload():
