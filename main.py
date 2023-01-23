@@ -144,6 +144,10 @@ class Door(Entity):
 def DoorActivated():
     doorcreated=False
 
+sus=Entity()
+class monkey(Entity):
+    def __init__(self,**kwargs):
+        super().__init__(parent=sus, model='cube',texture='noice.mp4',color=color.red, scale=1, collider='box',y=1,z=-10, **kwargs)
 
 
 class Trigger(Entity):  #Thank you Squiggle for helping me with the trigger
@@ -152,6 +156,7 @@ class Trigger(Entity):  #Thank you Squiggle for helping me with the trigger
         #Little bit of
         self.trigger_distance = trigger_distance 
         self.on_trigger = on_trigger
+
 
     def update(self):
         dist = distance_2d(self.position, player.position) #Figure out how to make it xyz and not just xz
@@ -226,9 +231,18 @@ class TriggerInteractable(Entity):
             destroy(self)
 
 def TriggerInteractableActivated():
-    print("Interacted")
+    global intermission
+    player.speed=0
+    intermission=True
+    Main_bg_1.stop()
+    DeathAmoungThePeople=Audio("assets/audio/FUCKINSCARY")
+    invoke(afteraffects,delay=12)
 
-
+def afteraffects():
+    intermission=False
+    player.x=-8
+    hopethisscaresyoubitches=Entity(parent=monkey,model='quad',texture='assets/noice')
+hopethisscaresyoubitches=[monkey() in range(1)]
 #KILL THOUGHTS3 AND 4!
 def DestroyThoughts3():
     global thoughts3
@@ -317,6 +331,8 @@ def introfunc6():
     intro6=Text(text='Now go unlock the door',y=.35,x=-.3)
 
 def introendfunc():
+    global intermission
+    intermission=True
     introend=Text(text="you'd really think I'd let you escape?",x=-.5,y=.1,scale=2)
     destroy(wall)
     IntroMusic.stop()
@@ -332,8 +348,8 @@ def introendfunc():
             introend2=Text(text='WAKE UP!',x=-.5,y=.1,scale=3)
             triggeractivated=TriggerInteractable(2,TriggerInteractableActivated,x=-13)
             def introendfunc3():
-                global intermissionscreen,door,doorcreated
-                intermissionscreen.enabled=False
+                global intermissionscreen,door,doorcreated,Main_bg_1,intermission
+                intermission=False
                 doorcreated=True
                 door.enabled=True
                 player.x=-8
@@ -425,7 +441,8 @@ def update():
         getrektnoob=False
     if intermission:
         intermissionscreen.enabled=True
-        intermission=False
+    elif not intermission:
+        intermissionscreen.enabled=False
     pos.text=f'X: {player.x},Y: {player.y}' #updates the co-ords text
     """MAINMANHIMSELF.x=player.x"""
 
