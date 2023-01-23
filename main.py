@@ -6,70 +6,7 @@ Anyways lets go into the code and expect GREATNESS
 """
 #imports as you can tell
 from ursina import * #Ursina the main thing we need
-import tkinter as tk #Tkinter for the loading screen
-import threading #Threading allows for Tkinter and ursina to load at the same time
-import time #Regulates the loading screen from not disappearing when ursina loads
 from ursina.prefabs.platformer_controller_2d import PlatformerController2d #2D platform player handler
-from PIL import Image, ImageTk #This allows the gif to play when loading
-from itertools import count, cycle #dunno forgot deal with it
-
-#creates the tkinter loading screen, allowing the gif to cycle through frames
-class ImageLabel(tk.Label):
-    def load(self, im):
-        if isinstance(im, str):
-            im = Image.open(im)
-        frames = []
-
-        try:
-            for i in count(1):
-                frames.append(ImageTk.PhotoImage(im.copy()))
-                im.seek(i)
-        except EOFError:
-            pass
-        self.frames = cycle(frames)
-
-        try:
-            self.delay = im.info['duration']
-        except:
-            self.delay = 100
-
-        if len(frames) == 1:
-            self.config(image=next(self.frames))
-        else:
-            self.next_frame()
-
-    def unload(self):
-        self.config(image=None)
-        self.frames = None
-
-    def next_frame(self):
-        if self.frames:
-            self.config(image=next(self.frames))
-            self.after(self.delay, self.next_frame)
-
-
-class AppyPappy(threading.Thread): #
-    def __init__(self):
-        threading.Thread.__init__(self)
-        self.start()
-
-    def callback(self):
-        self.root.quit()
-
-    def run(self):
-        self.root = tk.Tk()
-        self.root.protocol("WM_DELETE_WINDOW", self.callback)
-
-        lbl = ImageLabel(self.root)
-        lbl.pack()
-        lbl.load('assets/load.gif')
-        self.root.attributes('-fullscreen', True)
-        self.root.attributes('-topmost', True)
-        self.root.mainloop()
-
-    def ends(self):
-        self.root.quit()
-
 
 
 class Key1(Entity):
@@ -238,7 +175,8 @@ def afteraffects():
     global intermission
     intermission=False
     player.x=-8
-    scary_bg=Entity(model='cube',texture='noice.mp4',z=10,scale=(50,50,1),y=10)
+    scary_bg=Entity(model='cube',texture='noice.mp4',z=30,scale=(50,50,1),y=10)
+    scary_bg_follow=scary_bg.add_script(SmoothFollow(target=player,speed=4,offset=[0,5,30]))
 #KILL THOUGHTS3 AND 4!
 def DestroyThoughts3():
     global thoughts3
@@ -254,7 +192,6 @@ def DestroyThoughts3():
 window.borderless = False
 window.title='Game'
 
-apps=AppyPappy()
 time.sleep(2)
 
 app = Ursina()
@@ -271,19 +208,19 @@ camerafollow=camera.add_script(SmoothFollow(target=player, offset=[0,5,-30], spe
 #loads objects now and destroys them as to not cause a fps drop when loading them in later
 Skelekeyload=Entity(model='skelekey')
 destroy(Skelekeyload)
-IntroMusic=Audio('assets/audio/game_intro_1',loop=True)
+IntroMusic=Audio('assets/audio/game_intro_1',loop=True,autoplay=False)
 FakeEnding=Audio('assets/audio/fake_ending',autoplay=False,loop=True)
 ParkourCollapse=Audio('assets/audio/RIPParkour',autoplay=False)
 
 camera.orthographic = True
 camera.fov = 20
 #Level platforms and walls etc.
-door=Door(2,False,DoorActivated,x=-14,z=-20,color=color.red,enabled=False)
+door=Door(2,False,DoorActivated,x=-14,z=20,color=color.red,enabled=False)
 ground = Entity(model='cube', color=color.gray.tint(-.4), z=-.1, y=-1, origin_y=.5, scale=(1000,100), collider='box', ignore=True)
 wall=Entity(model='cube',color=color.gray,scale=(2,100),x=-10,collider='box')
 wall1=Entity(model='cube',color=color.gray,x=9,y=2,collider='box',scale=(2,50,-10))
 blackness=Entity(model='cube',color=color.black,x=-35,scale=(50,90,10))
-intermissionscreen=Entity(model='cube',color=color.black,scale=(100,100),z=-10,enabled=False)#Fake loading screen
+intermissionscreen=Entity(model='cube',color=color.black,scale=(100,150),z=-10,enabled=False)#Fake loading screen
 
 #General variables
 haskey1=False
@@ -292,13 +229,25 @@ Move=True
 intermission=False
 haskey12=False
 PressedDorDpadRight=True
+intermission=True
+load=Entity(model='cube',texture='assets/intro',y=2,z=-11,scale=(15,15))
+loadtext=Text(text='Cheese games... not really the studio',y=.35,x=-.25,z=-11)
+s = Sequence(Func(load.fade_out, duration=0),1,Func(print, 'two'),Func(load.fade_in, duration=1))
+s1 = Sequence(Func(loadtext.fade_out, duration=0),1,Func(print, 'two'),Func(loadtext.fade_in, duration=5))
 
+s.start()
+s1.start()
 #idc about function nesting deal with it
 #Welcomes the player to the game and does a TINY tutorial
-intro1=Text(text='Welcome',y=.35,x=-.3)
 def introfunc():
-    destroy(intro1)
+    global intermission
+    IntroMusic.play()
+    intro1=Text(text='Welcome',y=.35,x=-.3,z=11)
+    intermission=False
+    destroy(load)
+    destroy(loadtext)
     def introfunc1():
+        destroy(intro1)
         intro2=Text(text='TO THE GAME!',y=.35,x=-.3)
         def introfunc2():
             destroy(intro2)
@@ -307,7 +256,7 @@ def introfunc():
             intro3=Text(text='Press "D" or "Dpad right" to move to the right',y=.35,x=-.3)
         invoke(introfunc2,delay=3)
     invoke(introfunc1,delay=2)
-invoke(introfunc,delay=5)
+invoke(introfunc,delay=8)
 
 #Imagine a squirrel dancing here
 def introfunc3():
@@ -321,7 +270,7 @@ def introfunc3():
 
 #Do i really have to explain what this function does?
 def introfunc6():
-    global intro6,intro5,IntroMusic
+    global intro6,intro5
     destroy(intro5)
     intro6=Text(text='Now go unlock the door',y=.35,x=-.3)
 
@@ -369,7 +318,7 @@ input_handler.bind('gamepad a','space')
 input_handler.bind('gamepad x','e')
 
 #Player walking animations
-playeranim=SpriteSheetAnimation('assets/player/frisk_left',rotation_y=-90,origin_y=-.4,parent=player,tileset_size=(4,1), fps=4, animations={
+playeranim=SpriteSheetAnimation('assets/player/player',rotation_y=-90,origin_y=-.45,parent=player,tileset_size=(4,1), fps=4, animations={
     'walk_left' : ((0,0), (1,1)),
     'idle_left' : ((4,1),(4,1)),
     'walk_right' : ((2,2), (3,3)),
@@ -441,10 +390,6 @@ def update():
     pos.text=f'X: {player.x},Y: {player.y}' #updates the co-ords text
     """MAINMANHIMSELF.x=player.x"""
 
-#Kills the loading screen
-def endload():
-    apps.ends()
-invoke(endload)
 
 pausetest=Text(text="Pause menu under-construction.",enabled=False,x=-.2,y=.1)
 pause=Entity(enabled=False, ignore_paused=True)
