@@ -144,10 +144,6 @@ class Door(Entity):
 def DoorActivated():
     doorcreated=False
 
-sus=Entity()
-class monkey(Entity):
-    def __init__(self,**kwargs):
-        super().__init__(parent=sus, model='cube',texture='noice.mp4',color=color.red, scale=1, collider='box',y=1,z=-10, **kwargs)
 
 
 class Trigger(Entity):  #Thank you Squiggle for helping me with the trigger
@@ -239,10 +235,10 @@ def TriggerInteractableActivated():
     invoke(afteraffects,delay=12)
 
 def afteraffects():
+    global intermission
     intermission=False
     player.x=-8
-    hopethisscaresyoubitches=Entity(parent=monkey,model='quad',texture='assets/noice')
-hopethisscaresyoubitches=[monkey() in range(1)]
+    scary_bg=Entity(model='cube',texture='noice.mp4',z=10,scale=(50,50,1),y=10)
 #KILL THOUGHTS3 AND 4!
 def DestroyThoughts3():
     global thoughts3
@@ -281,7 +277,6 @@ ParkourCollapse=Audio('assets/audio/RIPParkour',autoplay=False)
 
 camera.orthographic = True
 camera.fov = 20
-
 #Level platforms and walls etc.
 door=Door(2,False,DoorActivated,x=-14,z=-20,color=color.red,enabled=False)
 ground = Entity(model='cube', color=color.gray.tint(-.4), z=-.1, y=-1, origin_y=.5, scale=(1000,100), collider='box', ignore=True)
@@ -441,7 +436,7 @@ def update():
         getrektnoob=False
     if intermission:
         intermissionscreen.enabled=True
-    elif not intermission:
+    else:
         intermissionscreen.enabled=False
     pos.text=f'X: {player.x},Y: {player.y}' #updates the co-ords text
     """MAINMANHIMSELF.x=player.x"""
